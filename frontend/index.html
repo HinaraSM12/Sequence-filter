@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Sequence-Filter</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico">
+  <!-- Font Awesome para el ícono de ayuda -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="sf-wrapper">
+  <header class="sf-header">
+    <div class="sf-brand">
+      <span class="sf-logo-badge">
+        <img class="sf-logo" src="assets/img/sequence-filter-logo.png" alt="Logo Sequence Filter" loading="lazy">
+      </span>
+      <div class="sf-brand-text">
+        <h1>Sequence-Filter</h1>
+        <p>Tu buscador de secuencias</p>
+      </div>
+    </div>
+    <button type="button" class="sf-help" id="helpBtn" title="Ayuda" aria-haspopup="dialog" aria-controls="myModal">
+      <i class="fa fa-question" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <section class="sf-content">
+    <!-- IZQUIERDA -->
+    <div class="sf-card sf-left">
+      <h3>Opciones de búsqueda</h3>
+      <form>
+        <label class="sf-label" for="inputTextSequence">Ingrese una secuencia:</label>
+        <input type="text" class="sf-input" id="inputTextSequence" placeholder="Secuencia a buscar" style="text-transform:uppercase">
+
+        <div class="sf-grid">
+          <div class="sf-field"><label for="minCharge">Carga min:</label><input type="number" class="sf-input" id="minCharge"></div>
+          <div class="sf-field"><label for="maxCharge">Carga max:</label><input type="number" class="sf-input" id="maxCharge"></div>
+
+          <div class="sf-field"><label for="minIsoelectric">Isoelectric min:</label><input type="number" class="sf-input" id="minIsoelectric" step=".1"></div>
+          <div class="sf-field"><label for="maxIsoelectric">Isoelectric max:</label><input type="number" class="sf-input" id="maxIsoelectric" step=".1"></div>
+
+          <div class="sf-field"><label for="minHidrofobic">% Hidrofobic min:</label><input type="number" class="sf-input" id="minHidrofobic" step="any"></div>
+          <div class="sf-field"><label for="maxHidrofobic">% Hidrofobic max:</label><input type="number" class="sf-input" id="maxHidrofobic" step="any"></div>
+
+          <div class="sf-field"><label for="minBoman">Boman min:</label><input type="number" class="sf-input" id="minBoman" step=".01"></div>
+          <div class="sf-field"><label for="maxBoman">Boman max:</label><input type="number" class="sf-input" id="maxBoman" step=".01"></div>
+
+          <div class="sf-field"><label for="minMoment">Momento Hidrofóbico Relativo min:</label><input type="number" class="sf-input" id="minMoment" step=".01"></div>
+          <div class="sf-field"><label for="maxMoment">Momento Hidrofóbico Relativo max:</label><input type="number" class="sf-input" id="maxMoment" step=".01"></div>
+        </div>
+
+        <label class="sf-label" for="inputTextIgnoreSequence">Ignorar secuencia</label>
+        <input type="text" class="sf-input" id="inputTextIgnoreSequence" placeholder="AA..." style="text-transform:uppercase">
+
+        <div class="sf-actions">
+          <button type="button" id="findButton" class="sf-btn">Buscar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- DERECHA -->
+    <div class="sf-card sf-right">
+      <h3>Resultados</h3>
+      <div class="sf-stats">
+        <p><strong>Estadísticas de búsqueda:</strong></p>
+        <p>Péptidos que cumplen el criterio de búsqueda: <span id="searchNumber">0</span></p>
+        <p>Porcentaje de péptidos seleccionados con respecto al total de datos: <span id="searchPercentage">0</span>%</p>
+        <p>Los aminoácidos más comunes y su porcentaje con respecto al total son: <span id="aminoPercentage">—</span></p>
+      </div>
+
+      <div class="sf-table-head">
+        <h4>Secuencias encontradas:</h4>
+        <div class="sf-downloads">
+          <button type="button" id="downloadCsv" class="sf-btn ghost">Descargar CSV</button>
+          <button type="button" id="downloadFasta" class="sf-btn ghost">Descargar Fasta</button>
+        </div>
+      </div>
+
+      <div class="sf-table-wrap" tabindex="0" aria-label="Tabla de resultados desplazable">
+        <table id="archivoInfoTable" class="sf-table">
+          <thead><tr><th>Título</th><th>Secuencia</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===== MODAL ===== -->
+<div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="fsHelpTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content fs-modal">
+      <div class="fs-modal__header">
+        <h4 id="fsHelpTitle" class="modal-title">Filter Sequence — Ayuda</h4>
+        <button type="button" class="close" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="fs-modal__body">
+        <p><strong>Filter Sequence</strong> permite buscar y filtrar péptidos por patrón de secuencia y por propiedades fisicoquímicas
+          (carga, punto isoeléctrico, % hidrofóbico, índice de Boman y momento hidrofóbico relativo).</p>
+
+        <h5 class="fs-modal__subtitle">Cómo usar</h5>
+        <ul class="fs-modal__list">
+          <li><strong>Secuencia:</strong> escribe un patrón (usa <code>X</code> como comodín). Ej.: <code>KAFKA</code> o <code>KAXKA</code>.</li>
+          <li><strong>Ignorar secuencia:</strong> separa por comas para excluir patrones. Ej.: <code>GG,PPP</code>.</li>
+          <li><strong>Filtros numéricos:</strong> puedes fijar solo mínimo, solo máximo o ambos. Los valores aceptan punto o coma decimal.</li>
+          <li><strong>Resultados:</strong> el patrón coincidente se resalta; arriba verás el número de péptidos, el porcentaje y
+              los aminoácidos más frecuentes.</li>
+        </ul>
+
+        <h5 class="fs-modal__subtitle">Consejos</h5>
+        <ul class="fs-modal__list">
+          <li>Si un filtro devuelve “todo”, revisa que el campo no esté vacío y que el número use el separador correcto.</li>
+          <li>Para exportar, usa <em>Descargar CSV</em> o <em>Descargar Fasta</em>.</li>
+        </ul>
+
+        <hr class="fs-modal__divider">
+        <p class="fs-modal__footnote">Desarrollado por la línea de interacciones moleculares — <em>Biología Funcional</em>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="bioutils.js"></script>
+<script src="app.js"></script>
+<script src="modal.js"></script>
+</body>
+</html>
