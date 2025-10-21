@@ -12,19 +12,12 @@ app.use(express.json());
 
 const {
   PORT = 3000,
-  DB_DATABASE = 'prospeccionydise',
-  TABLE_NAME,
-  HEADER_COLUMN,
-  SEQUENCE_COLUMN
+  DB_DATABASE = 'prospeccionydise'
 } = process.env;
 
-/* --------- Utilidades --------- */
 function parseFastaSmart(text) {
-  // soporta FASTA clásico y "header-linea / seq-linea" (como tu Laravel)
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   const out = [];
-
-  // si hay alguna línea que empiece con '>' => FASTA clásico
   const hasGt = lines.some(l => l.startsWith('>'));
 
   if (hasGt) {
@@ -50,7 +43,6 @@ function parseFastaSmart(text) {
       });
     }
   } else {
-    // modo alterno: header y secuencia alternadas (como tu while $i%2)
     for (let i = 0; i < lines.length; i += 2) {
       const header = lines[i] || '';
       const sequence = (lines[i + 1] || '');
@@ -74,7 +66,6 @@ async function listColumns() {
   );
 }
 
-// heurística: encontrar una tabla con columnas "header-like" y "sequence-like"
 function autoDetectTableAndCols(columnsMeta) {
   const headerCandidates = new Set([
     'header', 'titulo', 'title', 'name', 'nombre', 'id', 'accession', 'acc', 'gi', 'descripcion', 'description'
@@ -83,7 +74,6 @@ function autoDetectTableAndCols(columnsMeta) {
     'sequence', 'seq', 'secuencia', 'peptide', 'pep', 'aa', 'cadena'
   ]);
 
-  // agrupar por tabla
   const byTable = {};
   for (const row of columnsMeta) {
     const t = row.TABLE_NAME;
@@ -100,25 +90,18 @@ function autoDetectTableAndCols(columnsMeta) {
       const name = c.COLUMN_NAME.toLowerCase();
       if (!headerCol && headerCandidates.has(name)) { headerCol = c.COLUMN_NAME; score += 2; }
       if (!seqCol && seqCandidates.has(name)) { seqCol = c.COLUMN_NAME; score += 3; }
-      // bonos por tipos de texto
       if (['text','varchar','mediumtext','longtext'].includes((c.DATA_TYPE||'').toLowerCase())) score += 0.2;
     }
 
-    if (headerCol && seqCol) {
-      scores.push({ table, headerCol, seqCol, score });
-    }
+    if (headerCol && seqCol) scores.push({ table, headerCol, seqCol, score });
   }
 
-  // si hay varias, la de mayor score
   scores.sort((a,b)=> b.score - a.score);
   return scores[0] || null;
 }
 
-/* --------- Endpoints --------- */
-
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-// debug de esquema (útil para ver nombres reales)
 app.get('/api/_debug/schema', async (_req, res) => {
   try {
     const cols = await listColumns();
@@ -129,7 +112,6 @@ app.get('/api/_debug/schema', async (_req, res) => {
   }
 });
 
-// ver qué autodetección haría
 app.get('/api/_auto_config', async (_req, res) => {
   try {
     const cols = await listColumns();
@@ -140,13 +122,10 @@ app.get('/api/_auto_config', async (_req, res) => {
   }
 });
 
-// secuencias: intenta DB; si falla, usa FASTA
 app.get('/api/sequences', async (req, res) => {
   try {
-    // si vienen pattern/ignore, se aplican en SQL (opcional)
     const { pattern, ignore } = req.query;
 
-    // Resolver tabla/columnas:
     let t = (process.env.TABLE_NAME || '').trim();
     let hcol = (process.env.HEADER_COLUMN || '').trim();
     let scol = (process.env.SEQUENCE_COLUMN || '').trim();
@@ -162,15 +141,18 @@ app.get('/api/sequences', async (req, res) => {
     const params = [];
 
     if (pattern) {
-      const rx = String(pattern).toUpperCase().replace(/X/gi, '[A-Z]');
+      const rx = String(pattern).toUpperCase()
+        .replace(/[.*+?^${}()|[\]\\]/g,'\\$&')
+        .replace(/X/gi, '[A-Z]');
       where.push(`${scol} REGEXP ?`);
       params.push(rx);
     }
     if (ignore) {
       const parts = String(ignore).toUpperCase().split(',').map(s => s.trim()).filter(Boolean);
       parts.forEach(p => {
+        const rx = p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/X/gi, '[A-Z]');
         where.push(`${scol} NOT REGEXP ?`);
-        params.push(p.replace(/X/gi, '[A-Z]'));
+        params.push(rx);
       });
     }
 
@@ -179,7 +161,6 @@ app.get('/api/sequences', async (req, res) => {
     sql += ' LIMIT 200000';
 
     const rows = await db.query(sql, params);
-    // sanitizar secuencia como haces en el front
     const normalized = rows.map(r => ({
       header: String(r.header || '').replace(/\r?\n/g,''),
       sequence: String(r.sequence || '').toUpperCase().replace(/[^ACDEFGHIKLMNPQRSTVWY]/g, '')
@@ -187,7 +168,6 @@ app.get('/api/sequences', async (req, res) => {
     return res.json(normalized);
   } catch (err) {
     console.error('DB error, usando FASTA. Motivo:', err.message);
-    // FALLBACK FASTA
     try {
       const file = path.join(__dirname, 'sequences', 'BD_FINAL.fasta');
       const txt = fs.readFileSync(file, 'utf8');
@@ -199,5 +179,7 @@ app.get('/api/sequences', async (req, res) => {
     }
   }
 });
+
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.listen(PORT, () => console.log(`API listening on :${PORT}`));

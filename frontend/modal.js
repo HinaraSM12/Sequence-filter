@@ -1,44 +1,14 @@
+//public/modal.js
 (function(){
-  const openBtn  = document.getElementById('helpBtn');
-  const modal    = document.getElementById('myModal');
-  const dialog   = modal.querySelector('.modal-dialog');
+  const modal = document.getElementById('myModal');
+  const btn = document.getElementById('helpBtn');
   const closeBtn = modal.querySelector('.close');
-  let backdrop   = null;
 
-  function makeBackdrop(){
-    const el = document.createElement('div');
-    el.className = 'modal-backdrop fade';
-    document.body.appendChild(el);
-    // activar transición
-    void el.offsetWidth;
-    el.classList.add('show');
-    return el;
-  }
+  function open(){ modal.classList.add('show','fade'); }
+  function close(){ modal.classList.remove('show'); setTimeout(()=>modal.classList.remove('fade'),150); }
 
-  function openModal(){
-    if (!backdrop) backdrop = makeBackdrop();
-    modal.style.display = 'block';
-    modal.classList.add('show');
-    modal.removeAttribute('aria-hidden');
-    closeBtn.focus();
-    document.addEventListener('keydown', onKey);
-  }
-
-  function closeModal(){
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden','true');
-    if (backdrop) backdrop.classList.remove('show');
-    setTimeout(()=>{
-      modal.style.display = 'none';
-      if (backdrop){ backdrop.remove(); backdrop = null; }
-      openBtn.focus();
-    }, 200);
-    document.removeEventListener('keydown', onKey);
-  }
-
-  function onKey(e){ if (e.key === 'Escape') closeModal(); }
-
-  openBtn.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
-  modal.addEventListener('mousedown', (e)=>{ if (!dialog.contains(e.target)) closeModal(); });
+  btn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', (e)=>{ if(e.target === modal) close(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') close(); });
 })();

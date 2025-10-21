@@ -6,9 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link rel="icon" href="/favicon.ico">
-  <!-- Font Awesome para el ícono de ayuda -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <!-- Estilos propios -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -30,12 +28,11 @@
   </header>
 
   <section class="sf-content">
-    <!-- IZQUIERDA -->
     <div class="sf-card sf-left">
       <h3>Opciones de búsqueda</h3>
       <form>
         <label class="sf-label" for="inputTextSequence">Ingrese una secuencia:</label>
-        <input type="text" class="sf-input" id="inputTextSequence" placeholder="Secuencia a buscar" style="text-transform:uppercase">
+        <input type="text" class="sf-input" id="inputTextSequence" placeholder="SECUENCIA A BUSCAR" style="text-transform:uppercase">
 
         <div class="sf-grid">
           <div class="sf-field"><label for="minCharge">Carga min:</label><input type="number" class="sf-input" id="minCharge"></div>
@@ -63,7 +60,6 @@
       </form>
     </div>
 
-    <!-- DERECHA -->
     <div class="sf-card sf-right">
       <h3>Resultados</h3>
       <div class="sf-stats">
@@ -91,7 +87,7 @@
   </section>
 </main>
 
-<!-- ===== MODAL ===== -->
+<!-- Modal Ayuda -->
 <div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="fsHelpTitle" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content fs-modal">
@@ -100,34 +96,22 @@
         <button type="button" class="close" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="fs-modal__body">
-        <p><strong>Filter Sequence</strong> permite buscar y filtrar péptidos por patrón de secuencia y por propiedades fisicoquímicas
-          (carga, punto isoeléctrico, % hidrofóbico, índice de Boman y momento hidrofóbico relativo).</p>
-
-        <h5 class="fs-modal__subtitle">Cómo usar</h5>
-        <ul class="fs-modal__list">
-          <li><strong>Secuencia:</strong> escribe un patrón (usa <code>X</code> como comodín). Ej.: <code>KAFKA</code> o <code>KAXKA</code>.</li>
-          <li><strong>Ignorar secuencia:</strong> separa por comas para excluir patrones. Ej.: <code>GG,PPP</code>.</li>
-          <li><strong>Filtros numéricos:</strong> puedes fijar solo mínimo, solo máximo o ambos. Los valores aceptan punto o coma decimal.</li>
-          <li><strong>Resultados:</strong> el patrón coincidente se resalta; arriba verás el número de péptidos, el porcentaje y
-              los aminoácidos más frecuentes.</li>
-        </ul>
-
-        <h5 class="fs-modal__subtitle">Consejos</h5>
-        <ul class="fs-modal__list">
-          <li>Si un filtro devuelve “todo”, revisa que el campo no esté vacío y que el número use el separador correcto.</li>
-          <li>Para exportar, usa <em>Descargar CSV</em> o <em>Descargar Fasta</em>.</li>
-        </ul>
-
-        <hr class="fs-modal__divider">
-        <p class="fs-modal__footnote">Desarrollado por la línea de interacciones moleculares — <em>Biología Funcional</em>.</p>
+        <p><strong>Filter Sequence</strong> permite buscar y filtrar péptidos por patrón de secuencia y por propiedades fisicoquímicas.</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== SCRIPTS ===== -->
-<script src="bioutils.js"></script>
-<script src="app.js"></script>
-<script src="modal.js"></script>
+<!-- Overlay de Carga (debe ir al FINAL del <body>, fuera de cualquier contenedor) -->
+<div id="loadingOverlay" class="sf-loading" aria-live="polite" aria-busy="true">
+  <div class="sf-loading__box" role="status" aria-label="Cargando">
+    <div class="sf-loading__spinner" aria-hidden="true"></div>
+    <div class="sf-loading__text">Cargando…</div>
+  </div>
+</div>
+
+<script src="modal.js?v=dev"></script>
+<script src="bioutils.js?v=dev"></script>
+<script src="app.js?v=dev"></script>
 </body>
 </html>

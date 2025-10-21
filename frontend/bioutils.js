@@ -1,7 +1,7 @@
+//public/bioutils.js
 /* ==========================
    Sequence-Filter | bioutils.js
    ========================== */
-
 window.aminoacids_list = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y'];
 
 window.aminosFullName = {
@@ -27,7 +27,6 @@ window.aminosFullName = {
   'V': 'Valine'
 };
 
-/* ------- Utilidades ------- */
 function cleanSeq(seq) {
   return String(seq || '')
     .toUpperCase()
@@ -40,7 +39,6 @@ function cleanHeader(h) {
 }
 window.cleanHeader = cleanHeader;
 
-/* ------- Carga neta a pH dado ------- */
 window.getCharge = function getCharge(aminoacids, pH = 7.0) {
   const seq = cleanSeq(aminoacids);
   if (!seq) return 0;
@@ -52,8 +50,7 @@ window.getCharge = function getCharge(aminoacids, pH = 7.0) {
     Nterm: 9.69, Cterm: 2.34
   };
 
-  let CNi = 0; // positivas
-  let CNj = 0; // negativas
+  let CNi = 0, CNj = 0;
 
   for (let i = 0; i < seq.length; i++) {
     const aa = seq[i];
@@ -64,15 +61,12 @@ window.getCharge = function getCharge(aminoacids, pH = 7.0) {
     }
   }
 
-  // extremos
   CNi += pow10(pKa.Nterm) / (pow10(pH) + pow10(pKa.Nterm));
   CNj += pow10(pH) / (pow10(pH) + pow10(pKa.Cterm));
 
-  return CNi - CNj; // valor real (no string)
+  return CNi - CNj;
 };
 
-/* ------- Punto isoeléctrico (PRIMER cruce) ------- */
-/* CLAVE: fija PI en el PRIMER i que cumple -0.1 <= CN <= 0.1 y ya NO lo sobreescribe */
 window.getIsoEle = function getIsoEle(aminoacids) {
   const seq = cleanSeq(aminoacids);
   if (!seq) return 0;
@@ -101,22 +95,19 @@ window.getIsoEle = function getIsoEle(aminoacids) {
       }
     }
 
-    // extremos
     CNi += pow10(pKa.Nterm) / (pow10(i) + pow10(pKa.Nterm));
     CNj += pow10(i) / (pow10(i) + pow10(pKa.Cterm));
 
     const CN = CNi - CNj;
 
     if (CN >= -0.1 && CN <= 0.1) {
-      PI = +i.toFixed(1);      // PRIMER match → fijamos y salimos
+      PI = +i.toFixed(1);
       break;
     }
   }
-  // Si nunca entró en la ventana, devuelve el último i redondeado (consistencia)
   return PI != null ? PI : 0;
 };
 
-/* ------- % hidrofóbico ------- */
 window.getHidrof = function getHidrof(aminoacids) {
   const s = cleanSeq(aminoacids);
   if (!s) return 0;
@@ -130,7 +121,6 @@ window.getHidrof = function getHidrof(aminoacids) {
   return +( (H / s.length) * 100 ).toFixed(2);
 };
 
-/* ------- Momento hidrofóbico relativo (MHr) ------- */
 window.getMoment = function getMoment(aminoacids) {
   const s = cleanSeq(aminoacids);
   if (!s) return 0;
@@ -182,7 +172,6 @@ window.getMoment = function getMoment(aminoacids) {
   return MHr;
 };
 
-/* ------- Índice de Boman ------- */
 window.getBoman = function getBoman(aminoacids) {
   const s = cleanSeq(aminoacids);
   if (!s) return 0;
@@ -214,7 +203,6 @@ window.getBoman = function getBoman(aminoacids) {
   return +IB.toFixed(2);
 };
 
-/* ------- Top aminoácidos ------- */
 window.getMostUsedAminoacids = function getMostUsedAminoacids(allAminoacids, aminoacids_list){
   const s = cleanSeq(allAminoacids);
   if (!s.length) return '—';
