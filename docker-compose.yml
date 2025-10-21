@@ -2,26 +2,14 @@ services:
   api:
     build:
       context: ./api
-    container_name: sequence-filter-api
+    container_name: api
     env_file:
       - ./api/.env
     environment:
-      # Puedes sobreescribir por variables de entorno si quieres
-      PORT: ${PORT:-3000}
-      DB_CONNECTION: ${DB_CONNECTION:-mysql}
-      DB_HOST: ${DB_HOST:-host.docker.internal}  # si tu mysql57 está en otro compose
-      DB_PORT: ${DB_PORT:-3307}                   # puerto publicado por tu mysql57
-      DB_DATABASE: ${DB_DATABASE:-prospeccionydise}
-      DB_USERNAME: ${DB_USERNAME:-prospeccion}
-      DB_PASSWORD: ${DB_PASSWORD:-biomole1520}
-      # Si los dejas vacíos, el API intentará autodetectar tabla/columnas
-      TABLE_NAME: ${TABLE_NAME:-}
-      HEADER_COLUMN: ${HEADER_COLUMN:-}
-      SEQUENCE_COLUMN: ${SEQUENCE_COLUMN:-}
+      # puedes sobreescribir aquí si quieres, pero con .env es suficiente
+      PORT: 3000
     ports:
-      - "4010:3000"   # API: http://localhost:4010
-    volumes:
-      - ./sequences:/app/sequences:ro  # para fallback FASTA
+      - "4010:3000"  # API: http://localhost:4010
     networks:
       - sf_net
 

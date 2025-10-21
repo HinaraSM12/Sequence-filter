@@ -15,11 +15,11 @@ const {
   DB_DATABASE = 'prospeccionydise'
 } = process.env;
 
+/* ---------- utils ---------- */
 function parseFastaSmart(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
   const out = [];
   const hasGt = lines.some(l => l.startsWith('>'));
-
   if (hasGt) {
     let header = null, seq = [];
     for (const line of lines) {
@@ -52,7 +52,6 @@ function parseFastaSmart(text) {
       });
     }
   }
-
   return out;
 }
 
@@ -68,46 +67,51 @@ async function listColumns() {
 
 function autoDetectTableAndCols(columnsMeta) {
   const headerCandidates = new Set([
-    'header', 'titulo', 'title', 'name', 'nombre', 'id', 'accession', 'acc', 'gi', 'descripcion', 'description'
+    'header','titulo','title','name','nombre','id','accession','acc','gi','descripcion','description'
   ]);
   const seqCandidates = new Set([
-    'sequence', 'seq', 'secuencia', 'peptide', 'pep', 'aa', 'cadena'
+    'sequence','seq','secuencia','peptide','pep','aa','cadena'
   ]);
-
   const byTable = {};
   for (const row of columnsMeta) {
     const t = row.TABLE_NAME;
     if (!byTable[t]) byTable[t] = [];
     byTable[t].push(row);
   }
-
   const scores = [];
   for (const [table, cols] of Object.entries(byTable)) {
     let headerCol = null, seqCol = null;
     let score = 0;
-
     for (const c of cols) {
-      const name = c.COLUMN_NAME.toLowerCase();
+      const name = (c.COLUMN_NAME||'').toLowerCase();
       if (!headerCol && headerCandidates.has(name)) { headerCol = c.COLUMN_NAME; score += 2; }
       if (!seqCol && seqCandidates.has(name)) { seqCol = c.COLUMN_NAME; score += 3; }
       if (['text','varchar','mediumtext','longtext'].includes((c.DATA_TYPE||'').toLowerCase())) score += 0.2;
     }
-
     if (headerCol && seqCol) scores.push({ table, headerCol, seqCol, score });
   }
-
   scores.sort((a,b)=> b.score - a.score);
   return scores[0] || null;
 }
 
+/* ---------- endpoints ---------- */
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+// prueba directa a DB
+app.get('/api/pingdb', async (_req, res) => {
+  try {
+    const rows = await db.query('SELECT 1 AS ok');
+    res.json({ ok: true, db: rows[0] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
 app.get('/api/_debug/schema', async (_req, res) => {
   try {
     const cols = await listColumns();
     res.json(cols);
   } catch (e) {
-    console.error('schema error', e.message);
     res.status(500).json({ error: 'schema_error', message: e.message });
   }
 });
@@ -142,7 +146,7 @@ app.get('/api/sequences', async (req, res) => {
 
     if (pattern) {
       const rx = String(pattern).toUpperCase()
-        .replace(/[.*+?^${}()|[\]\\]/g,'\\$&')
+        .replace(/[.*+?^${}()|[\]\\]/g,'\\$&')   // ESCAPE seguro
         .replace(/X/gi, '[A-Z]');
       where.push(`${scol} REGEXP ?`);
       params.push(rx);
@@ -167,19 +171,21 @@ app.get('/api/sequences', async (req, res) => {
     }));
     return res.json(normalized);
   } catch (err) {
-    console.error('DB error, usando FASTA. Motivo:', err.message);
+    // Fallback a FASTA local
     try {
       const file = path.join(__dirname, 'sequences', 'BD_FINAL.fasta');
       const txt = fs.readFileSync(file, 'utf8');
       const rows = parseFastaSmart(txt);
       return res.json(rows);
     } catch (e2) {
-      console.error('FASTA fallback error:', e2.message);
       return res.status(500).json({ error: 'internal_error', detail: err.message });
     }
   }
 });
 
+// sirve frontend si levantas el API solo
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.listen(PORT, () => console.log(`API listening on :${PORT}`));
+app.listen(PORT, () => {
+  // (silencioso si quieres) — aquí podría ir un console.log
+});
