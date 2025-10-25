@@ -27,7 +27,7 @@ services:
       - proxy
     environment:
       # pon tu correo
-      - DEFAULT_EMAIL=tu.correo@unal.edu.co
+      - DEFAULT_EMAIL=hisanchezm@unal.edu.co
       # o explícitamente indica el nombre del contenedor proxy:
       - NGINX_PROXY_CONTAINER=edge-proxy
     volumes:
