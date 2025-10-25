@@ -1,14 +1,11 @@
-//public/app.js
 /* ==========================
-   Sequence-Filter | app.js (optimizado)
+   Sequence-Filter | app.js
    ========================== */
-// /public/app.js
-// ==========================
-// CONSOLA EN MODO SILENCIADA
-// ==========================
-// Silencia TODOS los métodos de consola para que no aparezca NADA.
-// (Incluye log/info/debug/warn/error/table/group/dir/trace/time*)
+
+// Silenciador de consola opcional (útil en producción)
+const MUTE_CONSOLE = false;
 (function hardMuteConsole(){
+  if (!MUTE_CONSOLE) return;
   const noop = function(){};
   const methods = [
     'log','info','debug','warn','error','table','group','groupCollapsed','groupEnd',
@@ -17,75 +14,50 @@
   for (const m of methods) { if (m in console) console[m] = noop; }
 })();
 
+const API_BASE = '/api';
+
 let sequences = [];
 let cachedMetrics = new Map();
 let lastFiltered = [];
 
 /* ========= HELPERS ========= */
-function $id(id){ return document.getElementById(id); }
+const $id = (id)=>document.getElementById(id);
 
-/* ---------- Overlay: forzado por inline styles y colgado del <body> ---------- */
+/* ---------- Overlay ---------- */
 function ensureOverlayOnTop(){
   const ov = $id('loadingOverlay');
   if (!ov) return null;
-
-  // Si no cuelga del body (o fue envuelto), lo movemos.
   if (ov.parentNode !== document.body) document.body.appendChild(ov);
 
-  // Estilos inline para vencer cualquier CSS externo/conflictivo.
-  ov.style.position = 'fixed';
-  ov.style.left = '0';
-  ov.style.top = '0';
-  ov.style.width = '100vw';
-  ov.style.height = '100vh';
-  ov.style.zIndex = '2147483647';
-  ov.style.display = 'grid';
-  ov.style.placeItems = 'center';
-  ov.style.background = 'rgba(255,255,255,.75)';
-  ov.style.backdropFilter = 'blur(1.5px)';
-  ov.style.transition = 'opacity .2s ease';
-  ov.style.visibility = 'visible';
+  // Forzar sobre todo
+  Object.assign(ov.style, {
+    position:'fixed', left:'0', top:'0', width:'100vw', height:'100vh',
+    zIndex:'2147483647', display:'grid', placeItems:'center',
+    background:'rgba(255,255,255,.75)', backdropFilter:'blur(1.5px)',
+    transition:'opacity .2s ease', visibility:'visible'
+  });
   return ov;
 }
-
 function showLoader(msg='Cargando…'){
-  const ov = ensureOverlayOnTop();
-  if (!ov) return;
-  const t = ov.querySelector('.sf-loading__text');
-  if (t) t.textContent = msg;
-
-  // Mostrar — TODO inline para evitar reglas que lo oculten.
-  ov.style.opacity = '1';
-  ov.style.pointerEvents = 'auto';
-  ov.style.visibility = 'visible';
-  // Bloquear scroll de la página
+  const ov = ensureOverlayOnTop(); if (!ov) return;
+  const t = ov.querySelector('.sf-loading__text'); if (t) t.textContent = msg;
+  ov.style.opacity = '1'; ov.style.pointerEvents = 'auto'; ov.style.visibility = 'visible';
   document.documentElement.style.overflow = 'hidden';
-  // Deshabilitar acciones mientras carga
-  ['findButton','downloadCsv','downloadFasta'].forEach(id=>{
-    const el = $id(id); if (el) el.disabled = true;
-  });
+  ['findButton','downloadCsv','downloadFasta'].forEach(id=>{ const el=$id(id); if (el) el.disabled = true; });
 }
-
 function hideLoader(){
-  const ov = $id('loadingOverlay');
-  if (!ov) return;
-  ov.style.opacity = '0';
-  ov.style.pointerEvents = 'none';
-  ov.style.visibility = 'hidden';
+  const ov = $id('loadingOverlay'); if (!ov) return;
+  ov.style.opacity = '0'; ov.style.pointerEvents = 'none'; ov.style.visibility = 'hidden';
   document.documentElement.style.overflow = '';
-  ['findButton','downloadCsv','downloadFasta'].forEach(id=>{
-    const el = $id(id); if (el) el.disabled = false;
-  });
+  ['findButton','downloadCsv','downloadFasta'].forEach(id=>{ const el=$id(id); if (el) el.disabled = false; });
 }
-
-// Fuerza pintado: 2 frames + reflow
 async function paintOverlay(){
   await new Promise(requestAnimationFrame);
-  const ov = $id('loadingOverlay'); if (ov) void ov.offsetHeight; // reflow
+  const ov = $id('loadingOverlay'); if (ov) void ov.offsetHeight;
   await new Promise(requestAnimationFrame);
 }
 
-/* ---------- Lectura de inputs ---------- */
+/* ---------- Inputs ---------- */
 function escapeRegexExceptX(str){
   const ESC = str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return ESC.replace(/X/gi, '[A-Z]');
@@ -118,7 +90,7 @@ function readInputs(){
   };
 }
 
-/* ---------- Métricas (con caché) ---------- */
+/* ---------- Métricas con caché ---------- */
 function canonicalMetrics(seq){
   const s = cleanSeq(seq);
   if (cachedMetrics.has(s)) return cachedMetrics.get(s);
@@ -131,7 +103,6 @@ function canonicalMetrics(seq){
   cachedMetrics.set(s, out);
   return out;
 }
-
 function inRangeInclusive(val, min, max){
   if (val == null || Number.isNaN(val)) return false;
   const hasMin = min != null && !Number.isNaN(min);
@@ -147,7 +118,7 @@ function passesIgnore(seq, ignorePatterns){
   return true;
 }
 
-/* ---------- Filtrado asíncrono (cede frames) ---------- */
+/* ---------- Filtrado asíncrono ---------- */
 async function filterSequencesAsync(data, ctx, onProgress, chunkSize=2500){
   const out = [];
   const total = data.length || 1;
@@ -174,13 +145,14 @@ async function filterSequencesAsync(data, ctx, onProgress, chunkSize=2500){
   return out;
 }
 
-/* ---------- Render por lotes (cede frames) ---------- */
+/* ---------- Render por lotes ---------- */
 function addHighLights(sequenceFind, seqRegex) {
   if (!seqRegex || seqRegex.source === '(?:)') return sequenceFind;
   if (!seqRegex.global) seqRegex = new RegExp(seqRegex.source, 'g');
   return sequenceFind.replace(seqRegex, m=>`<span class="highlight">${m}</span>`);
 }
 async function renderRowsBatched(tbody, rows, highlightRegex, onProgress, batchSize = 600){
+  if (!tbody) return;
   tbody.innerHTML = '';
   const frag = document.createDocumentFragment();
   let htmlBuffer = [];
@@ -247,7 +219,7 @@ async function findSequences(){
 }
 
 /* ---------- Descargas ---------- */
-function esc(s){ return String(s).replace(/"/g,'""'); }
+const esc = (s)=>String(s).replace(/"/g,'""');
 function downloadSequencesCSV(){
   const rows = lastFiltered.length ? lastFiltered : sequences;
   let out = 'header,sequence\n';
@@ -274,8 +246,8 @@ async function init(){
   showLoader('Cargando base de secuencias…');
   await paintOverlay();
   try{
-    const res = await fetch('/api/sequences');
-    if (!res.ok) throw new Error('API');
+    const res = await fetch(`${API_BASE}/sequences`, { headers: { 'Accept':'application/json' } });
+    if (!res.ok) throw new Error(`API ${res.status}`);
     const raw = await res.json();
 
     sequences = raw.map(it=>({
@@ -301,11 +273,12 @@ async function init(){
     $id('downloadFasta').addEventListener('click', downloadSequencesFasta);
     $id('inputTextSequence').addEventListener('keypress', (e)=>{ if((e.keyCode||e.which)===13) findSequences(); });
 
-  } catch(_err){
+  } catch(err){
+    console.error(err);
     alert('No se pudo cargar /api/sequences');
   } finally{
     hideLoader();
   }
 }
 
-init();
+document.addEventListener('DOMContentLoaded', init);

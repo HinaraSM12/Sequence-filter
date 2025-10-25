@@ -4,10 +4,18 @@
   <meta charset="utf-8" />
   <title>Sequence-Filter</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Fuentes & estilos -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="icon" href="/favicon.ico">
+  <!-- Usa un favicon local para no golpear "/" del host -->
+  <link rel="icon" href="assets/img/favicon.ico">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Evita que proxies intermedios cacheen HTML -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 </head>
 <body>
 
@@ -30,25 +38,26 @@
   <section class="sf-content">
     <div class="sf-card sf-left">
       <h3>Opciones de búsqueda</h3>
+
       <form>
         <label class="sf-label" for="inputTextSequence">Ingrese una secuencia:</label>
         <input type="text" class="sf-input" id="inputTextSequence" placeholder="SECUENCIA A BUSCAR" style="text-transform:uppercase">
 
         <div class="sf-grid">
           <div class="sf-field"><label for="minCharge">Carga min:</label><input type="number" class="sf-input" id="minCharge"></div>
-          <div class="sf-field"><label for="maxCharge">Carga max:</label><input type="number" class="sf-input" id="maxCharge"></div>
+          <div class="sf-field"><label for="maxCharge">Carga máx:</label><input type="number" class="sf-input" id="maxCharge"></div>
 
-          <div class="sf-field"><label for="minIsoelectric">Isoelectric min:</label><input type="number" class="sf-input" id="minIsoelectric" step=".1"></div>
-          <div class="sf-field"><label for="maxIsoelectric">Isoelectric max:</label><input type="number" class="sf-input" id="maxIsoelectric" step=".1"></div>
+          <div class="sf-field"><label for="minIsoelectric">Isoeléctrico min:</label><input type="number" class="sf-input" id="minIsoelectric" step=".1"></div>
+          <div class="sf-field"><label for="maxIsoelectric">Isoeléctrico máx:</label><input type="number" class="sf-input" id="maxIsoelectric" step=".1"></div>
 
-          <div class="sf-field"><label for="minHidrofobic">% Hidrofobic min:</label><input type="number" class="sf-input" id="minHidrofobic" step="any"></div>
-          <div class="sf-field"><label for="maxHidrofobic">% Hidrofobic max:</label><input type="number" class="sf-input" id="maxHidrofobic" step="any"></div>
+          <div class="sf-field"><label for="minHidrofobic">% Hidrofóbico min:</label><input type="number" class="sf-input" id="minHidrofobic" step="any"></div>
+          <div class="sf-field"><label for="maxHidrofobic">% Hidrofóbico máx:</label><input type="number" class="sf-input" id="maxHidrofobic" step="any"></div>
 
           <div class="sf-field"><label for="minBoman">Boman min:</label><input type="number" class="sf-input" id="minBoman" step=".01"></div>
-          <div class="sf-field"><label for="maxBoman">Boman max:</label><input type="number" class="sf-input" id="maxBoman" step=".01"></div>
+          <div class="sf-field"><label for="maxBoman">Boman máx:</label><input type="number" class="sf-input" id="maxBoman" step=".01"></div>
 
           <div class="sf-field"><label for="minMoment">Momento Hidrofóbico Relativo min:</label><input type="number" class="sf-input" id="minMoment" step=".01"></div>
-          <div class="sf-field"><label for="maxMoment">Momento Hidrofóbico Relativo max:</label><input type="number" class="sf-input" id="maxMoment" step=".01"></div>
+          <div class="sf-field"><label for="maxMoment">Momento Hidrofóbico Relativo máx:</label><input type="number" class="sf-input" id="maxMoment" step=".01"></div>
         </div>
 
         <label class="sf-label" for="inputTextIgnoreSequence">Ignorar secuencia</label>
@@ -88,7 +97,7 @@
 </main>
 
 <!-- Modal Ayuda -->
-<div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="fsHelpTitle" aria-hidden="true">
+<div id="myModal" class="modal" role="dialog" aria-labelledby="fsHelpTitle" aria-modal="true" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content fs-modal">
       <div class="fs-modal__header">
@@ -102,7 +111,7 @@
   </div>
 </div>
 
-<!-- Overlay de Carga (debe ir al FINAL del <body>, fuera de cualquier contenedor) -->
+<!-- Overlay de Carga (fuera de contenedores; siempre al final del body) -->
 <div id="loadingOverlay" class="sf-loading" aria-live="polite" aria-busy="true">
   <div class="sf-loading__box" role="status" aria-label="Cargando">
     <div class="sf-loading__spinner" aria-hidden="true"></div>
@@ -110,8 +119,9 @@
   </div>
 </div>
 
-<script src="modal.js?v=dev"></script>
-<script src="bioutils.js?v=dev"></script>
-<script src="app.js?v=dev"></script>
+<!-- Scripts (defer para cargar tras el HTML) -->
+<script src="modal.js?v=dev" defer></script>
+<script src="bioutils.js?v=dev" defer></script>
+<script src="app.js?v=dev" defer></script>
 </body>
 </html>

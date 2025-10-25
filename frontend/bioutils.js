@@ -1,11 +1,11 @@
-//public/bioutils.js
 /* ==========================
    Sequence-Filter | bioutils.js
    ========================== */
+
 window.aminoacids_list = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y'];
 
 window.aminosFullName = {
-  'A': 'Alaline',
+  'A': 'Alanine',
   'R': 'Arginine',
   'N': 'Asparagine',
   'D': 'Aspartic',
@@ -79,7 +79,7 @@ window.getIsoEle = function getIsoEle(aminoacids) {
   };
 
   let PI = null;
-  for (let i = 0; i < 14; i = +(i + 0.01).toFixed(2)) {
+  for (let i = 0; i <= 14; i = +(i + 0.01).toFixed(2)) {
     let CNi = 0, CNj = 0;
 
     for (let j = 0; j < seq.length; j++) {
@@ -118,7 +118,7 @@ window.getHidrof = function getHidrof(aminoacids) {
       case 'V': case 'M': case 'C': case 'W': H++; break;
     }
   }
-  return +( (H / s.length) * 100 ).toFixed(2);
+  return +((H / s.length) * 100).toFixed(2);
 };
 
 window.getMoment = function getMoment(aminoacids) {
@@ -168,7 +168,7 @@ window.getMoment = function getMoment(aminoacids) {
   }
 
   const MH = (1 / s.length) * Math.sqrt(sen*sen + cos*cos);
-  const MHr = +( (MH / 2.88) * 100 ).toFixed(2);
+  const MHr = +(((MH / 2.88) * 100)).toFixed(2);
   return MHr;
 };
 
