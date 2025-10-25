@@ -1,17 +1,57 @@
+version: "3.9"
+
 services:
+  # Reverse proxy en el borde (80/443) + Let's Encrypt automático
+  proxy:
+    image: nginxproxy/nginx-proxy:alpine
+    container_name: edge-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./proxy/certs:/etc/nginx/certs:rw
+      - ./proxy/vhost.d:/etc/nginx/vhost.d
+      - ./proxy/html:/usr/share/nginx/html
+    networks:
+      - sf_net
+    restart: unless-stopped
+
+  acme:
+    image: nginxproxy/acme-companion
+    container_name: edge-proxy-acme
+    depends_on:
+      - proxy
+    environment:
+      # Cambia este correo por uno tuyo de la UN para emisión de certificados
+      - DEFAULT_EMAIL=tu.correo@unal.edu.co
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./proxy/certs:/etc/nginx/certs:rw
+      - ./proxy/vhost.d:/etc/nginx/vhost.d
+      - ./proxy/html:/usr/share/nginx/html
+    networks:
+      - sf_net
+    restart: unless-stopped
+
   api:
     build:
       context: ./api
-    container_name: api
+    container_name: sequence-filter-api
     env_file:
       - ./api/.env
     environment:
-      # puedes sobreescribir aquí si quieres, pero con .env es suficiente
       PORT: 3000
-    ports:
-      - "4010:3000"  # API: http://localhost:4010
+    expose:
+      - "3000"              # solo dentro de la red Docker
     networks:
       - sf_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   frontend:
     image: nginx:alpine
@@ -20,11 +60,17 @@ services:
       - ./frontend:/usr/share/nginx/html:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - api
-    ports:
-      - "9091:80"     # Front: http://localhost:9091
+      api:
+        condition: service_healthy
+    expose:
+      - "80"                # el proxy entrará por aquí
+    environment:
+      - VIRTUAL_HOST=sequence-filter.medellin.unal.edu.co
+      - LETSENCRYPT_HOST=sequence-filter.medellin.unal.edu.co
+      - VIRTUAL_PORT=80
     networks:
       - sf_net
+    restart: unless-stopped
 
 networks:
   sf_net:
